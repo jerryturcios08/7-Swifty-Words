@@ -220,45 +220,55 @@ class ViewController: UIViewController {
         var solutionsString = ""
         var letterBits = [String]()
 
-        // Loads the level file from the main bundle
-        if let levelFileUrl = Bundle.main.url(forResource: "level\(level)", withExtension: "txt") {
-            // Loads the content from the file
-            if let levelContents = try? String(contentsOf: levelFileUrl) {
-                // Creates an array of strings from each line in the file
-                var lines = levelContents.components(separatedBy: "\n")
-                // Randomizes the lines
-                lines.shuffle()
+        // Loads a file in the background
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            // Loads the level file from the main bundle
+            if let levelFileUrl = Bundle.main.url(forResource: "level\(self?.level ?? 1)", withExtension: "txt") {
+                // Loads the content from the file
+                if let levelContents = try? String(contentsOf: levelFileUrl) {
+                    // Creates an array of strings from each line in the file
+                    var lines = levelContents.components(separatedBy: "\n")
+                    // Randomizes the lines
+                    lines.shuffle()
 
-                // Loads each component from every line into the user interface
-                for (index, line) in lines.enumerated() {
-                    let parts = line.components(separatedBy: ": ")
-                    let answer = parts[0]
-                    let clue = parts[1]
+                    // Loads each component from every line into the user interface
+                    for (index, line) in lines.enumerated() {
+                        let parts = line.components(separatedBy: ": ")
+                        let answer = parts[0]
+                        let clue = parts[1]
 
-                    clueString += "\(index + 1). \(clue)\n"
+                        clueString += "\(index + 1). \(clue)\n"
 
-                    let solutionWord = answer.replacingOccurrences(of: "|", with: "")
+                        let solutionWord = answer.replacingOccurrences(of: "|", with: "")
 
-                    solutionsString += "\(solutionWord.count) letters\n"
-                    solutions.append(solutionWord)
+                        solutionsString += "\(solutionWord.count) letters\n"
+                        self?.solutions.append(solutionWord)
 
-                    let bits = answer.components(separatedBy: "|")
-                    letterBits += bits
+                        let bits = answer.components(separatedBy: "|")
+                        letterBits += bits
+                    }
                 }
             }
         }
 
-        // Sets the number of words left to guess
-        numberOfWordsLeft = solutions.count
+        // Updates the UI in the main thread
+        DispatchQueue.main.async { [weak self] in
+            // Sets the number of words left to guess
+            if let count = self?.solutions.count {
+                self?.numberOfWordsLeft = count
+            }
 
-        cluesLabel.text = clueString.trimmingCharacters(in: .whitespacesAndNewlines)
-        answersLabel.text = solutionsString.trimmingCharacters(in: .whitespacesAndNewlines)
+            self?.cluesLabel.text = clueString.trimmingCharacters(in: .whitespacesAndNewlines)
+            self?.answersLabel.text = solutionsString.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        letterButtons.shuffle()
+            self?.letterButtons.shuffle()
 
-        if letterButtons.count == letterBits.count {
-            for i in 0..<letterButtons.count {
-                letterButtons[i].setTitle(letterBits[i], for: .normal)
+            if self?.letterButtons.count == letterBits.count {
+                if let count = self?.letterButtons.count {
+                    for i in 0..<count {
+                        self?.letterButtons[i].setTitle(letterBits[i], for: .normal)
+                    }
+                }
             }
         }
     }
