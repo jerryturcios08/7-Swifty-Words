@@ -161,7 +161,11 @@ class ViewController: UIViewController {
 
         currentAnswer.text = currentAnswer.text?.appending(buttonTitle)
         activatedButtons.append(sender)
-        sender.isHidden = true
+
+        // Add fade out animation for the letter group button
+        UIView.animate(withDuration: 1, delay: 0, options: [], animations: {
+            sender.alpha = 0
+        })
     }
 
     @objc func submitTapped(_ sender: UIButton) {
